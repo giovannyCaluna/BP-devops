@@ -5,6 +5,7 @@ on:
     branches: [ "**" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch: 
 
 jobs:
   build-and-test:
@@ -31,3 +32,36 @@ jobs:
 
     - name: Build Docker image
       run: docker build -t tata:${{ github.sha }} .
+
+    - name: Upload Docker image for later jobs
+      uses: actions/upload-artifact@v3
+      with:
+        name: docker-image
+        path: |
+          **/tata:${{ github.sha }}  # This requires saving the image to a file if wanted (optional)
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' 
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Push Docker image
+      run: |
+        docker tag tata:${{ github.sha }} yourdockerhubusername/tata:latest
+        docker push yourdockerhubusername/tata:latest
+        docker tag tata:${{ github.sha }} yourdockerhubusername/tata:${{ github.sha }}
+        docker push yourdockerhubusername/tata:${{ github.sha }}
+
+    - name: Deploy to production
+      run: |
+        ssh -o StrictHostKeyChecking=no user@your-prod-server 'bash /path/to/deploy-script.sh ${{ github.sha }}'
