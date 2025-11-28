@@ -1,0 +1,20 @@
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import helmet from 'helmet';
+
+import devOpsRoutes from './routes/devops';
+
+const app = express();
+
+app.use(helmet());
+app.use(cors());
+app.use(bodyParser.json());
+
+app.use('/DevOps', devOpsRoutes);
+
+app.get('/', (req, res) => {
+    res.send('Hello World');
+});
+
+export default app;
