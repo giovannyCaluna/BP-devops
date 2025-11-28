@@ -57,10 +57,10 @@ jobs:
 
     - name: Push Docker image
       run: |
-        docker tag tata:${{ github.sha }} yourdockerhubusername/tata:latest
-        docker push yourdockerhubusername/tata:latest
-        docker tag tata:${{ github.sha }} yourdockerhubusername/tata:${{ github.sha }}
-        docker push yourdockerhubusername/tata:${{ github.sha }}
+        docker tag tata:${{ github.sha }} giovacaluna96/tata:latest
+        docker push giovacaluna96/tata:latest
+        docker tag tata:${{ github.sha }} giovacaluna96/tata:${{ github.sha }}
+        docker push giovacaluna96/tata:${{ github.sha }}
 
     - name: Deploy to production
       run: |
