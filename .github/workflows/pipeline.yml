@@ -31,14 +31,15 @@ jobs:
       run: npm test
 
     - name: Build Docker image
-      run: docker build -t tata:${{ github.sha }} .
+      run: |
+        docker build -t tata:${{ github.sha }} .
+        docker save tata:${{ github.sha }} -o tata.tar
 
     - name: Upload Docker image for later jobs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: docker-image
-        path: |
-          **/tata:${{ github.sha }}  # This requires saving the image to a file if wanted (optional)
+        path: tata.tar
 
   deploy:
     needs: build-and-test
@@ -48,6 +49,14 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Download Docker image
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-image
+
+    - name: Load Docker image
+      run: docker load -i tata.tar
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
