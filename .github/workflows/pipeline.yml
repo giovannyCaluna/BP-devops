@@ -44,36 +44,49 @@ jobs:
         name: docker-image
         path: tata.tar
 
-  deploy:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' 
+#   deploy:
+#     needs: build-and-test
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/main' && github.event_name == 'push' 
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v4
 
-    - name: Download Docker image
-      uses: actions/download-artifact@v4
-      with:
-        name: docker-image
+#     - name: Download Docker image
+#       uses: actions/download-artifact@v4
+#       with:
+#         name: docker-image
 
-    - name: Load Docker image
-      run: docker load -i tata.tar
+#     - name: Load Docker image
+#       run: docker load -i tata.tar
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+#     - name: Log in to Docker Hub
+#       uses: docker/login-action@v2
+#       with:
+#         username: ${{ secrets.DOCKER_USERNAME }}
+#         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Push Docker image
-      run: |
-        docker tag tata:${{ github.sha }} giovacaluna96/tata:latest
-        docker push giovacaluna96/tata:latest
-        docker tag tata:${{ github.sha }} giovacaluna96/tata:${{ github.sha }}
-        docker push giovacaluna96/tata:${{ github.sha }}
+#     - name: Push Docker image
+#       run: |
+#         docker tag tata:${{ github.sha }} giovacaluna96/tata:latest
+#         docker push giovacaluna96/tata:latest
+#         docker tag tata:${{ github.sha }} giovacaluna96/tata:${{ github.sha }}
+#         docker push giovacaluna96/tata:${{ github.sha }}
 
-    - name: Deploy to production
-      run: |
-        ssh -o StrictHostKeyChecking=no user@your-prod-server 'bash /path/to/deploy-script.sh ${{ github.sha }}'
+#     - name: Setup SSH
+#       run: |
+#         mkdir -p ~/.ssh/
+#         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+#         chmod 600 ~/.ssh/id_rsa
+#         ssh-keyscan -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
+
+#     - name: Copy deployment files
+#       run: |
+#         scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:~/docker-compose.yml
+#         scp -o StrictHostKeyChecking=no nginx.conf ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:~/nginx.conf
+#         scp -o StrictHostKeyChecking=no scripts/deploy.sh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:~/deploy.sh
+
+#     - name: Deploy to production
+#       run: |
+#         ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} "export API_KEY='${{ secrets.API_KEY }}' && export JWT_SECRET='${{ secrets.JWT_SECRET }}' && bash ~/deploy.sh ${{ github.sha }}"
