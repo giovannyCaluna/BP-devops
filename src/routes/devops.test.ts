@@ -1,11 +1,19 @@
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import app from '../app';
+
+const SECRET_KEY = process.env.JWT_SECRET || 'devops-secret-key';
+
+const generateToken = () => {
+    const jti = Math.random().toString(36).substring(7);
+    return jwt.sign({ sub: 'test', jti }, SECRET_KEY, { expiresIn: '1h' });
+};
 
 describe('POST /DevOps', () => {
     const apiKey = '2f5ae96c-b558-4c7b-a590-a501ae1c3f6c';
-    const jwt = 'some-jwt-token';
 
     it('should return 200 and correct message with valid headers and payload', async () => {
+        const token = generateToken();
         const payload = {
             message: 'This is a test',
             to: 'Juan Perez',
@@ -16,7 +24,7 @@ describe('POST /DevOps', () => {
         const response = await request(app)
             .post('/DevOps')
             .set('X-Parse-REST-API-Key', apiKey)
-            .set('X-JWT-KWY', jwt)
+            .set('X-JWT-KWY', token)
             .send(payload);
 
         expect(response.status).toBe(200);
@@ -26,10 +34,11 @@ describe('POST /DevOps', () => {
     });
 
     it('should return 403 if API Key is invalid', async () => {
+        const token = generateToken();
         const response = await request(app)
             .post('/DevOps')
             .set('X-Parse-REST-API-Key', 'invalid-key')
-            .set('X-JWT-KWY', jwt)
+            .set('X-JWT-KWY', token)
             .send({});
 
         expect(response.status).toBe(403);
@@ -44,13 +53,24 @@ describe('POST /DevOps', () => {
         expect(response.status).toBe(401);
     });
 
+    it('should return 401 if JWT is invalid', async () => {
+        const response = await request(app)
+            .post('/DevOps')
+            .set('X-Parse-REST-API-Key', apiKey)
+            .set('X-JWT-KWY', 'invalid-token')
+            .send({});
+
+        expect(response.status).toBe(401);
+    });
+
     it('should return ERROR for other methods', async () => {
         const methods = ['get', 'put', 'delete', 'patch'];
         for (const method of methods) {
+            const token = generateToken();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const response = await (request(app) as any)[method]('/DevOps')
                 .set('X-Parse-REST-API-Key', apiKey)
-                .set('X-JWT-KWY', jwt);
+                .set('X-JWT-KWY', token);
 
             expect(response.text).toBe('ERROR');
         }
