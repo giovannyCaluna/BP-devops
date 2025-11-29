@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import  { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
@@ -41,7 +41,7 @@ export const validateJwt = (req: Request, res: Response, next: NextFunction) => 
         }
 
         next();
-    } catch (err) {
-        return res.status(401).send('Invalid Token');
+    } catch (error) {
+        return res.status(401).send('Invalid Token' + error);
     }
 };
