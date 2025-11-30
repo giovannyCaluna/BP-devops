@@ -61,7 +61,7 @@ graph TD
     ```env
     PORT=3000
     API_KEY=2f5ae96c-b558-4c7b-a590-a501ae1c3f6c
-    JWT_SECRET=devops-secret-key
+    JWT_SECRET=BPdevopsTechnicalTest
     REDIS_HOST=redis
     ```
 

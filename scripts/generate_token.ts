@@ -2,8 +2,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 
-// Suppress dotenv debug output by capturing console.log temporarily if needed, 
-// or just rely on the fact that we don't need debug mode.
+
 dotenv.config();
 
 const SECRET_KEY = process.env.JWT_SECRET || 'devops-secret-key';
@@ -22,7 +21,7 @@ const generateTokens = (count: number, raw: boolean) => {
         });
 
         if (raw) {
-            process.stdout.write(token); // Use process.stdout.write to avoid newline if desired, or console.log
+            process.stdout.write(token); 
         } else {
             console.log(`Token ${i + 1}:`);
             console.log(token);
