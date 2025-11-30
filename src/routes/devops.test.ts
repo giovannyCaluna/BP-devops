@@ -1,5 +1,15 @@
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
+
+jest.mock('redis', () => ({
+    createClient: jest.fn().mockReturnValue({
+        connect: jest.fn().mockResolvedValue(undefined),
+        on: jest.fn(),
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue('OK'),
+    }),
+}));
+
 import app from '../app';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'devops-secret-key';

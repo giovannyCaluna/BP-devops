@@ -2,12 +2,14 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 
+// Suppress dotenv debug output by capturing console.log temporarily if needed, 
+// or just rely on the fact that we don't need debug mode.
 dotenv.config();
 
 const SECRET_KEY = process.env.JWT_SECRET || 'devops-secret-key';
 
-const generateTokens = (count: number) => {
-    console.log(`Generating ${count} JWT(s)...\n`);
+const generateTokens = (count: number, raw: boolean) => {
+    if (!raw) console.log(`Generating ${count} JWT(s)...\n`);
     
     for (let i = 0; i < count; i++) {
         const payload = {
@@ -19,11 +21,19 @@ const generateTokens = (count: number) => {
             expiresIn: '1h',
         });
 
-        console.log(`Token ${i + 1}:`);
-        console.log(token);
-        console.log('-----------------------------------');
+        if (raw) {
+            process.stdout.write(token); // Use process.stdout.write to avoid newline if desired, or console.log
+        } else {
+            console.log(`Token ${i + 1}:`);
+            console.log(token);
+            console.log('-----------------------------------');
+        }
     }
 };
 
-const count = parseInt(process.argv[2]) || 1;
-generateTokens(count);
+const args = process.argv.slice(2);
+const raw = args.includes('--raw');
+const countArg = args.find(arg => !arg.startsWith('--'));
+const count = countArg ? parseInt(countArg) : 1;
+
+generateTokens(count, raw);

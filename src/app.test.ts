@@ -1,4 +1,14 @@
 import request from 'supertest';
+
+jest.mock('redis', () => ({
+    createClient: jest.fn().mockReturnValue({
+        connect: jest.fn().mockResolvedValue(undefined),
+        on: jest.fn(),
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue('OK'),
+    }),
+}));
+
 import app from './app';
 
 describe('GET /', () => {
