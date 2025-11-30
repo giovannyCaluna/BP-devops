@@ -73,7 +73,7 @@ jobs:
     - name: Get VM IP
       id: get-ip
       run: |
-        IP=$(terraform output -raw ip)
+        IP=$(terraform output -raw ip | tr -d '\r')
         echo "ip=$IP" >> $GITHUB_OUTPUT
       working-directory: ./terraform
       env:
