@@ -34,7 +34,7 @@ variable "ssh_pub_key" {
 }
 
 resource "google_compute_firewall" "web" {
-  name    = "allow-web-traffic"
+  name    = "allow-web-traffic-devops"
   network = "default"
 
   allow {
