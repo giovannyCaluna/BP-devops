@@ -13,11 +13,11 @@ const generateTokens = (count: number, raw: boolean) => {
     for (let i = 0; i < count; i++) {
         const payload = {
             sub: 'devops-test',
-            jti: uuidv4(), // Unique ID for the token
+            jti: uuidv4(), 
         };
 
         const token = jwt.sign(payload, SECRET_KEY, {
-            expiresIn: '1h',
+            expiresIn: '72h',
         });
 
         if (raw) {
