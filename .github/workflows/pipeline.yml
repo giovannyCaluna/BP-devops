@@ -44,49 +44,84 @@ jobs:
         name: docker-image
         path: tata.tar
 
-#   deploy:
-#     needs: build-and-test
-#     runs-on: ubuntu-latest
-#     if: github.ref == 'refs/heads/main' && github.event_name == 'push' 
+  provision-infrastructure:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    outputs:
+      vm_ip: ${{ steps.get-ip.outputs.ip }}
 
-#     steps:
-#     - name: Checkout code
-#       uses: actions/checkout@v4
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-#     - name: Download Docker image
-#       uses: actions/download-artifact@v4
-#       with:
-#         name: docker-image
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
 
-#     - name: Load Docker image
-#       run: docker load -i tata.tar
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./terraform
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
 
-#     - name: Log in to Docker Hub
-#       uses: docker/login-action@v2
-#       with:
-#         username: ${{ secrets.DOCKER_USERNAME }}
-#         password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}" -var="ssh_pub_key=${{ secrets.SSH_PUBLIC_KEY }}"
+      working-directory: ./terraform
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
 
-#     - name: Push Docker image
-#       run: |
-#         docker tag tata:${{ github.sha }} giovacaluna96/tata:latest
-#         docker push giovacaluna96/tata:latest
-#         docker tag tata:${{ github.sha }} giovacaluna96/tata:${{ github.sha }}
-#         docker push giovacaluna96/tata:${{ github.sha }}
+    - name: Get VM IP
+      id: get-ip
+      run: |
+        IP=$(terraform output -raw ip)
+        echo "ip=$IP" >> $GITHUB_OUTPUT
+      working-directory: ./terraform
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
 
-#     - name: Setup SSH
-#       run: |
-#         mkdir -p ~/.ssh/
-#         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-#         chmod 600 ~/.ssh/id_rsa
-#         ssh-keyscan -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
+  deploy:
+    needs: provision-infrastructure
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' 
 
-#     - name: Copy deployment files
-#       run: |
-#         scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:~/docker-compose.yml
-#         scp -o StrictHostKeyChecking=no nginx.conf ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:~/nginx.conf
-#         scp -o StrictHostKeyChecking=no scripts/deploy.sh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:~/deploy.sh
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-#     - name: Deploy to production
-#       run: |
-#         ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} "export API_KEY='${{ secrets.API_KEY }}' && export JWT_SECRET='${{ secrets.JWT_SECRET }}' && bash ~/deploy.sh ${{ github.sha }}"
+    - name: Download Docker image
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-image
+
+    - name: Load Docker image
+      run: docker load -i tata.tar
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Push Docker image
+      run: |
+        docker tag tata:${{ github.sha }} giovacaluna96/tata:latest
+        docker push giovacaluna96/tata:latest
+        docker tag tata:${{ github.sha }} giovacaluna96/tata:${{ github.sha }}
+        docker push giovacaluna96/tata:${{ github.sha }}
+
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh/
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ needs.provision-infrastructure.outputs.vm_ip }} >> ~/.ssh/known_hosts
+
+    - name: Copy deployment files
+      run: |
+        scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/docker-compose.yml
+        scp -o StrictHostKeyChecking=no nginx.conf ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/nginx.conf
+        scp -o StrictHostKeyChecking=no scripts/deploy.sh ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/deploy.sh
+
+    - name: Deploy to production
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }} "export API_KEY='${{ secrets.API_KEY }}' && export JWT_SECRET='${{ secrets.JWT_SECRET }}' && bash ~/deploy.sh ${{ github.sha }}"
