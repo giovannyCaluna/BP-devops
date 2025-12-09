@@ -122,8 +122,9 @@ jobs:
       run: |
         scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/docker-compose.yml
         scp -o StrictHostKeyChecking=no nginx.conf ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/nginx.conf
+        scp -o StrictHostKeyChecking=no prometheus.yml ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/prometheus.yml
         scp -o StrictHostKeyChecking=no scripts/deploy.sh ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/deploy.sh
 
     - name: Deploy to production
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }} "export API_KEY='${{ secrets.API_KEY }}' && export JWT_SECRET='${{ secrets.JWT_SECRET }}' && bash ~/deploy.sh ${{ github.sha }}"
+        ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }} "export API_KEY='${{ secrets.API_KEY }}' && export JWT_SECRET='${{ secrets.JWT_SECRET }}' && export GRAFANA_PASSWORD='${{ secrets.GRAFANA_PASSWORD }}' && bash ~/deploy.sh ${{ github.sha }}"
