@@ -123,6 +123,7 @@ jobs:
         scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/docker-compose.yml
         scp -o StrictHostKeyChecking=no nginx.conf ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/nginx.conf
         scp -o StrictHostKeyChecking=no prometheus.yml ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/prometheus.yml
+        scp -o StrictHostKeyChecking=no grafana-datasource.yml ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/grafana-datasource.yml
         scp -o StrictHostKeyChecking=no scripts/deploy.sh ${{ secrets.PROD_USER }}@${{ needs.provision-infrastructure.outputs.vm_ip }}:~/deploy.sh
 
     - name: Deploy to production
